@@ -37,6 +37,6 @@ Q drop (Ctrl+Q stack) · L advancements · F5 camera · F3 debug · Esc pause. T
 
 Code lives in the game/ folder (constants, noise, textures, world, mesher, physics, models, entities, inventory, ui, main).
 
-## Before launch
+## Links
 
-Replace the contract address in `index.html` (`#caText`) and the social / swap links.
+Contract: DwcXyhEcSvzWgakDKpetZLFvbAHutpGpzhbU4iempump · Telegram: https://t.me/bullcraftonsol
