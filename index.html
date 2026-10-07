@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BullCraft ($BULLCRAFT) — Mine. Build. Moon.</title>
+  <meta name="description" content="BullCraft is the blocky bull of Solana. Play the browser voxel game, mine gold, build your base and join the herd. $BULLCRAFT" />
+  <meta name="theme-color" content="#5d9e3b" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="64x64" href="/favicon-64.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <meta property="og:title" content="BullCraft ($BULLCRAFT)" />
+  <meta property="og:description" content="The blocky bull of Solana. Mine. Build. Moon. Play the game in your browser." />
+  <meta property="og:image" content="/bullcraft-og.png" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <!-- NAV -->
+  <header class="nav">
+    <a class="nav-brand" href="#top">
+      <img src="/logo-128.png" alt="BullCraft bull logo" width="40" height="40" />
+      <span>BullCraft</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#play">Play</a>
+      <a href="#about">About</a>
+      <a href="#tokenomics">Tokenomics</a>
+      <a href="#how-to-buy">How to Buy</a>
+      <a href="#roadmap">Roadmap</a>
+    </nav>
+    <a class="mc-btn mc-btn-green nav-buy" href="#how-to-buy">Buy $BULLCRAFT</a>
+    <button class="nav-toggle" id="navToggle" aria-label="Open menu">☰</button>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero" id="top">
+    <div class="clouds" aria-hidden="true">
+      <div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div><div class="cloud c4"></div>
+    </div>
+    <div class="hero-inner">
+      <div class="hero-logo-wrap">
+        <img class="hero-logo" src="/logo-512.png" alt="BullCraft — the blocky bull" width="320" height="320" />
+        <span class="splash" id="splash">Moo-n soon!</span>
+      </div>
+      <h1 class="hero-title">BULL<span>CRAFT</span></h1>
+      <p class="hero-ticker">$BULLCRAFT · on Solana</p>
+      <p class="hero-sub">The blocky bull broke out of the pasture and onto the blockchain. Mine gold, build your base, and charge to the moon with the herd.</p>
+      <div class="ca-box">
+        <span class="ca-label">CA:</span>
+        <code id="caText">COMING SOON — contract will be posted here at launch</code>
+        <button class="mc-btn mc-btn-small" id="copyCa" type="button">Copy</button>
+      </div>
+      <div class="hero-buttons">
+        <a class="mc-btn mc-btn-green" href="#play">▶ Play BullCraft</a>
+        <a class="mc-btn" href="#how-to-buy">Buy $BULLCRAFT</a>
+        <a class="mc-btn" href="https://dexscreener.com" target="_blank" rel="noopener">Chart</a>
+      </div>
+    </div>
+    <div class="ground" aria-hidden="true"><div class="grass-line"></div></div>
+  </section>
+
+  <!-- GAME -->
+  <section class="section section-game" id="play">
+    <div class="section-head">
+      <h2>Play BullCraft</h2>
+      <p>You are the bull. Explore an infinite blocky world, mine, build, craft and dig for gold. Your world saves automatically in this browser.</p>
+    </div>
+
+    <div class="game-frame" id="gameFrame">
+      <div class="game-wrap" id="gameWrap">
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- HUD -->
+        <div class="hud" id="hud">
+          <div class="crosshair" aria-hidden="true"></div>
+          <div class="hud-top-left">
+            <div class="hud-pill" id="hudCoords">XYZ: 0 0 0</div>
+            <div class="hud-pill" id="hudTime">☀ Day</div>
+            <div class="hud-pill" id="hudTarget"></div>
+          </div>
+          <div class="hud-top-right">
+            <button class="mc-btn mc-btn-small" id="btnInventory" type="button" title="E">Inventory</button>
+            <button class="mc-btn mc-btn-small" id="btnMode" type="button" title="Toggle Survival/Creative">Survival</button>
+            <button class="mc-btn mc-btn-small" id="btnSave" type="button">Save</button>
+            <button class="mc-btn mc-btn-small" id="btnFullscreen" type="button">⛶</button>
+          </div>
+          <div class="break-progress" id="breakProgress"><div></div></div>
+          <div class="hotbar" id="hotbar"></div>
+          <div class="hud-hint" id="hudHint">WASD move · Space jump · Mouse look · LMB mine · RMB place · 1-9 / scroll select · E inventory · F fly · F5 camera · Esc pause</div>
+          <div class="toast" id="toast"></div>
+        </div>
+
+        <!-- Touch controls -->
+        <div class="touch-ui" id="touchUi">
+          <div class="joystick" id="joystick"><div class="joy-knob" id="joyKnob"></div></div>
+          <div class="touch-buttons">
+            <button class="touch-btn" id="tJump" type="button">▲</button>
+            <button class="touch-btn" id="tMine" type="button">⛏</button>
+            <button class="touch-btn" id="tPlace" type="button">▣</button>
+            <button class="touch-btn" id="tFly" type="button">✈</button>
+          </div>
+        </div>
+
+        <!-- Inventory / crafting panel -->
+        <div class="panel-overlay hidden" id="inventoryPanel">
+          <div class="mc-panel">
+            <div class="mc-panel-title">Inventory &amp; Crafting <button class="mc-btn mc-btn-small" id="btnCloseInv" type="button">✕</button></div>
+            <div class="inv-columns">
+              <div>
+                <h4>Items <small>(click to put in selected hotbar slot)</small></h4>
+                <div class="inv-grid" id="invGrid"></div>
+              </div>
+              <div>
+                <h4>Crafting</h4>
+                <div class="recipes" id="recipes"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pause / start overlay -->
+        <div class="overlay" id="overlay">
+          <div class="overlay-box">
+            <img src="/logo-128.png" alt="" width="96" height="96" class="pixel" />
+            <h3 id="overlayTitle">BullCraft</h3>
+            <p id="overlayText">Loading world…</p>
+            <div class="overlay-buttons">
+              <button class="mc-btn mc-btn-green" id="btnPlay" type="button" disabled>Click to Play</button>
+              <button class="mc-btn" id="btnNewWorld" type="button">New World</button>
+            </div>
+            <div class="overlay-settings">
+              <label>Render distance
+                <select id="selRender">
+                  <option value="3">Tiny (3)</option>
+                  <option value="4" selected>Normal (4)</option>
+                  <option value="5">Far (5)</option>
+                  <option value="6">Epic (6)</option>
+                </select>
+              </label>
+              <label><input type="checkbox" id="chkSound" checked /> Sound</label>
+            </div>
+            <p class="overlay-controls">WASD move · Space jump · Shift sprint · Mouse look · Left click mine · Right click place · 1–9 hotbar · E inventory/crafting · F fly · F5 camera · Esc pause</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="game-features">
+      <div class="feature"><span class="feature-icon grass"></span><div><b>Infinite world</b><br />Procedurally generated hills, forests, rivers and gold veins.</div></div>
+      <div class="feature"><span class="feature-icon gold"></span><div><b>Mine &amp; build</b><br />Break blocks, collect them, place them. Craft planks, glass, bricks and gold blocks.</div></div>
+      <div class="feature"><span class="feature-icon save"></span><div><b>Local save</b><br />Your world, position and inventory are stored in your browser. No wallet needed.</div></div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="section section-dirt" id="about">
+    <div class="section-head">
+      <h2>What is BullCraft?</h2>
+      <p>A community memecoin on Solana with an actual game attached. No utility promises, just blocks, bulls and vibes.</p>
+    </div>
+    <div class="cards">
+      <article class="card">
+        <h3>🐂 The Bull</h3>
+        <p>Every bull market needs a mascot. Ours is 100% cubic, fully stackable and refuses to go bearish.</p>
+      </article>
+      <article class="card">
+        <h3>⛏ The Craft</h3>
+        <p>A full browser voxel game built for the herd. Mine, build, craft and dig for gold without installing anything.</p>
+      </article>
+      <article class="card">
+        <h3>🚀 The Moon</h3>
+        <p>Community driven, meme powered, Solana fast. Grab your pickaxe and charge with us.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- TOKENOMICS -->
+  <section class="section section-stone" id="tokenomics">
+    <div class="section-head">
+      <h2>Tokenomics</h2>
+      <p>Simple, fair, no hidden traps. Everything is on-chain.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-value">1B</div><div class="stat-label">Total Supply</div></div>
+      <div class="stat"><div class="stat-value">0%</div><div class="stat-label">Buy / Sell Tax</div></div>
+      <div class="stat"><div class="stat-value">100%</div><div class="stat-label">Liquidity Burned</div></div>
+      <div class="stat"><div class="stat-value">∞</div><div class="stat-label">Blocks to Mine</div></div>
+    </div>
+    <div class="token-details">
+      <div class="detail"><span>Name</span><b>BullCraft</b></div>
+      <div class="detail"><span>Ticker</span><b>$BULLCRAFT</b></div>
+      <div class="detail"><span>Chain</span><b>Solana</b></div>
+      <div class="detail"><span>Mint Authority</span><b>Revoked</b></div>
+      <div class="detail"><span>Freeze Authority</span><b>Revoked</b></div>
+      <div class="detail"><span>Team Tokens</span><b>0</b></div>
+    </div>
+  </section>
+
+  <!-- HOW TO BUY -->
+  <section class="section section-dirt" id="how-to-buy">
+    <div class="section-head">
+      <h2>How to Buy</h2>
+      <p>Four blocks to the moon.</p>
+    </div>
+    <ol class="steps">
+      <li class="step"><span class="step-num">1</span><div><b>Get a Solana wallet</b><p>Install Phantom, Solflare or Backpack on your phone or browser.</p></div></li>
+      <li class="step"><span class="step-num">2</span><div><b>Load up on SOL</b><p>Buy SOL on an exchange and send it to your wallet address.</p></div></li>
+      <li class="step"><span class="step-num">3</span><div><b>Swap for $BULLCRAFT</b><p>Open Jupiter or Raydium, paste the contract address and swap SOL for $BULLCRAFT.</p></div></li>
+      <li class="step"><span class="step-num">4</span><div><b>Join the herd</b><p>Hold, play BullCraft, share your builds and ride the bull.</p></div></li>
+    </ol>
+    <div class="center">
+      <a class="mc-btn mc-btn-green" href="https://jup.ag" target="_blank" rel="noopener">Swap on Jupiter</a>
+      <a class="mc-btn" href="https://raydium.io/swap" target="_blank" rel="noopener">Swap on Raydium</a>
+    </div>
+  </section>
+
+  <!-- ROADMAP -->
+  <section class="section section-stone" id="roadmap">
+    <div class="section-head">
+      <h2>Roadmap</h2>
+      <p>Achievements unlocked, one block at a time.</p>
+    </div>
+    <div class="roadmap">
+      <div class="phase">
+        <div class="phase-title">Phase 1 · Spawn</div>
+        <ul>
+          <li>✔ Website &amp; browser game live</li>
+          <li>✔ Token launch on Solana</li>
+          <li>☐ Community channels open</li>
+          <li>☐ Dexscreener &amp; listings</li>
+        </ul>
+      </div>
+      <div class="phase">
+        <div class="phase-title">Phase 2 · Mine</div>
+        <ul>
+          <li>☐ Build contests with prizes</li>
+          <li>☐ Meme raids &amp; partnerships</li>
+          <li>☐ CoinGecko / CMC listings</li>
+          <li>☐ New blocks, mobs and biomes</li>
+        </ul>
+      </div>
+      <div class="phase">
+        <div class="phase-title">Phase 3 · Moon</div>
+        <ul>
+          <li>☐ Multiplayer bull servers</li>
+          <li>☐ Shared world leaderboard</li>
+          <li>☐ Merch for the herd</li>
+          <li>☐ The moon, obviously</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMMUNITY -->
+  <section class="section section-game" id="community">
+    <div class="section-head">
+      <h2>Join the Herd</h2>
+      <p>Bulls are stronger together.</p>
+    </div>
+    <div class="center socials">
+      <a class="mc-btn" href="https://x.com" target="_blank" rel="noopener">𝕏 Twitter</a>
+      <a class="mc-btn" href="https://t.me" target="_blank" rel="noopener">✈ Telegram</a>
+      <a class="mc-btn" href="https://dexscreener.com" target="_blank" rel="noopener">📈 Dexscreener</a>
+      <a class="mc-btn" href="https://pump.fun" target="_blank" rel="noopener">💊 Pump.fun</a>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>© 2026 BullCraft. $BULLCRAFT is a meme coin with no intrinsic value or expectation of financial return. There is no formal team or roadmap guarantee. The game is for entertainment only.</p>
+    <p>BullCraft is a fan-made parody and is not affiliated with Mojang, Microsoft or Minecraft.</p>
+  </footer>
+
+  <script src="/main.js"></script>
+  <script type="module" src="/game.js"></script>
+</body>
+</html>
