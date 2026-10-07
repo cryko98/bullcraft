@@ -18,6 +18,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/style.css" />
+  <script type="importmap">{ "imports": { "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.module.min.js" } }</script>
 </head>
 <body>
   <!-- NAV -->
@@ -68,7 +69,7 @@
   <section class="section section-game" id="play">
     <div class="section-head">
       <h2>Play BullCraft</h2>
-      <p>You are the bull. Explore an infinite blocky world, mine, build, craft and dig for gold. Your world saves automatically in this browser.</p>
+      <p>You are the bull. Survive, mine, craft, build, fight zombies and complete the advancements. Your world saves automatically in this browser.</p>
     </div>
 
     <div class="game-frame" id="gameFrame">
@@ -80,19 +81,28 @@
           <div class="crosshair" aria-hidden="true"></div>
           <div class="hud-top-left">
             <div class="hud-pill" id="hudCoords">XYZ: 0 0 0</div>
-            <div class="hud-pill" id="hudTime">☀ Day</div>
+            <div class="hud-pill" id="hudTime">☀ Day 1</div>
             <div class="hud-pill" id="hudTarget"></div>
           </div>
           <div class="hud-top-right">
-            <button class="mc-btn mc-btn-small" id="btnInventory" type="button" title="E">Inventory</button>
-            <button class="mc-btn mc-btn-small" id="btnMode" type="button" title="Toggle Survival/Creative">Survival</button>
-            <button class="mc-btn mc-btn-small" id="btnSave" type="button">Save</button>
+            <button class="mc-btn mc-btn-small" id="btnInventory" type="button" title="E">Inv</button>
+            <button class="mc-btn mc-btn-small" id="btnQuests" type="button" title="L">Tasks</button>
+            <button class="mc-btn mc-btn-small" id="btnPause" type="button" title="Esc">Menu</button>
             <button class="mc-btn mc-btn-small" id="btnFullscreen" type="button">⛶</button>
           </div>
-          <div class="break-progress" id="breakProgress"><div></div></div>
-          <div class="hotbar" id="hotbar"></div>
-          <div class="hud-hint" id="hudHint">WASD move · Space jump · Mouse look · LMB mine · RMB place · 1-9 / scroll select · E inventory · F fly · F5 camera · Esc pause</div>
+          <pre class="debug" id="debug"></pre>
           <div class="toast" id="toast"></div>
+          <div class="adv-toast" id="advToast"></div>
+          <div class="hud-bottom">
+            <div class="item-name" id="itemName"></div>
+            <div class="status-bars" id="statusBars">
+              <div class="bar-row"><div class="hearts" id="hearts"></div><div class="hunger" id="hunger"></div></div>
+              <div class="bar-row"><div class="air" id="air"></div></div>
+              <div class="xp-row"><div class="xp-bar" id="xpBar"><div></div></div><span class="xp-level" id="xpLevel"></span></div>
+            </div>
+            <div class="hotbar" id="hotbar"></div>
+          </div>
+          <div class="hud-hint" id="hudHint">WASD move · Space jump · Shift sneak · Ctrl sprint · LMB mine/attack · RMB place/use/eat · E inventory · Q drop · L tasks · F5 camera</div>
         </div>
 
         <!-- Touch controls -->
@@ -102,25 +112,28 @@
             <button class="touch-btn" id="tJump" type="button">▲</button>
             <button class="touch-btn" id="tMine" type="button">⛏</button>
             <button class="touch-btn" id="tPlace" type="button">▣</button>
-            <button class="touch-btn" id="tFly" type="button">✈</button>
+            <button class="touch-btn" id="tSneak" type="button">▼</button>
+            <button class="touch-btn" id="tSprint" type="button">»</button>
           </div>
         </div>
 
-        <!-- Inventory / crafting panel -->
-        <div class="panel-overlay hidden" id="inventoryPanel">
+        <!-- Container GUI (inventory / crafting / furnace / chest) -->
+        <div class="gui hidden" id="gui"></div>
+        <div class="cursor-stack" id="cursorStack"></div>
+
+        <!-- Quest / advancements panel -->
+        <div class="panel-overlay hidden" id="questPanel">
           <div class="mc-panel">
-            <div class="mc-panel-title">Inventory &amp; Crafting <button class="mc-btn mc-btn-small" id="btnCloseInv" type="button">✕</button></div>
-            <div class="inv-columns">
-              <div>
-                <h4>Items <small>(click to put in selected hotbar slot)</small></h4>
-                <div class="inv-grid" id="invGrid"></div>
-              </div>
-              <div>
-                <h4>Crafting</h4>
-                <div class="recipes" id="recipes"></div>
-              </div>
-            </div>
+            <div class="mc-panel-title">Advancements <span id="questCount"></span> <button class="mc-btn mc-btn-small" id="btnCloseQuests" type="button">✕</button></div>
+            <div class="quest-list" id="questList"></div>
           </div>
+        </div>
+
+        <!-- Death screen -->
+        <div class="death hidden" id="deathScreen">
+          <h3>You died!</h3>
+          <p id="deathMsg"></p>
+          <button class="mc-btn mc-btn-green" id="btnRespawn" type="button">Respawn</button>
         </div>
 
         <!-- Pause / start overlay -->
@@ -131,6 +144,7 @@
             <p id="overlayText">Loading world…</p>
             <div class="overlay-buttons">
               <button class="mc-btn mc-btn-green" id="btnPlay" type="button" disabled>Click to Play</button>
+              <button class="mc-btn" id="btnMode" type="button">Mode: Survival</button>
               <button class="mc-btn" id="btnNewWorld" type="button">New World</button>
             </div>
             <div class="overlay-settings">
@@ -143,17 +157,18 @@
                 </select>
               </label>
               <label><input type="checkbox" id="chkSound" checked /> Sound</label>
+              <label><input type="checkbox" id="chkAutoJump" /> Auto-jump</label>
             </div>
-            <p class="overlay-controls">WASD move · Space jump · Shift sprint · Mouse look · Left click mine · Right click place · 1–9 hotbar · E inventory/crafting · F fly · F5 camera · Esc pause</p>
+            <p class="overlay-controls">WASD move · Space jump (double-tap in Creative: fly) · Shift sneak · Ctrl / double-tap W sprint · Left click mine &amp; attack · Right click place / use / eat · 1–9 &amp; scroll hotbar · E inventory &amp; crafting · Q drop · L advancements · F5 camera · F3 debug · Esc pause</p>
           </div>
         </div>
       </div>
     </div>
 
     <div class="game-features">
-      <div class="feature"><span class="feature-icon grass"></span><div><b>Infinite world</b><br />Procedurally generated hills, forests, rivers and gold veins.</div></div>
-      <div class="feature"><span class="feature-icon gold"></span><div><b>Mine &amp; build</b><br />Break blocks, collect them, place them. Craft planks, glass, bricks and gold blocks.</div></div>
-      <div class="feature"><span class="feature-icon save"></span><div><b>Local save</b><br />Your world, position and inventory are stored in your browser. No wallet needed.</div></div>
+      <div class="feature"><span class="feature-icon grass"></span><div><b>Survive</b><br />Health, hunger, fall damage, drowning, lava. Zombies spawn in the dark. Cows and pigs roam the hills.</div></div>
+      <div class="feature"><span class="feature-icon gold"></span><div><b>Mine &amp; craft</b><br />Caves, coal, iron, gold and diamonds. Craft tools, torches, furnaces and chests exactly like you know it.</div></div>
+      <div class="feature"><span class="feature-icon save"></span><div><b>Advancements</b><br />24 tasks from "Getting Wood" to "Diamonds!". Everything saves locally in your browser.</div></div>
     </div>
   </section>
 
@@ -276,6 +291,6 @@
   </footer>
 
   <script src="/main.js"></script>
-  <script type="module" src="/game.js"></script>
+  <script type="module" src="/game/main.js"></script>
 </body>
 </html>

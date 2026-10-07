@@ -226,9 +226,6 @@ p { margin: 0 0 1em; }
 .slot.selected { outline: 4px solid #fff; outline-offset: -2px; z-index: 1; }
 .slot canvas { width: 36px; height: 36px; image-rendering: pixelated; }
 .slot .count { position: absolute; right: 3px; bottom: 1px; font-size: 18px; color: #fff; text-shadow: 1px 1px 0 #000; font-family: var(--font-body); }
-.break-progress { position: absolute; left: 50%; top: calc(50% + 24px); width: 80px; height: 8px; transform: translateX(-50%); background: rgba(0,0,0,.6); border: 2px solid #000; display: none; }
-.break-progress.active { display: block; }
-.break-progress div { height: 100%; width: 0; background: var(--gold); }
 .toast { position: absolute; top: 60px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.7); padding: 6px 14px; font-size: 20px; opacity: 0; transition: opacity .3s; text-shadow: 1px 1px 0 #000; white-space: nowrap; }
 .toast.show { opacity: 1; }
 
@@ -299,4 +296,92 @@ body.touch .hud-top-left { top: 52px; }
   .slot { width: 40px; height: 40px; }
   .slot canvas { width: 28px; height: 28px; }
   .section { padding: 60px 16px; }
+}
+
+/* ===== Survival HUD ===== */
+.hud-bottom { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: none; }
+.item-name { font-size: 20px; color: #fff; text-shadow: 1px 1px 0 #000; opacity: 0; transition: opacity .3s; height: 22px; }
+.item-name.show { opacity: 1; }
+.status-bars { width: 486px; max-width: 95vw; }
+.bar-row { display: flex; justify-content: space-between; min-height: 18px; }
+.hearts, .hunger, .air { display: flex; gap: 1px; }
+.hunger, .air { flex-direction: row-reverse; margin-left: auto; }
+.hearts i, .hunger i, .air i { width: 18px; height: 18px; display: block; background-size: contain; background-repeat: no-repeat; image-rendering: pixelated; }
+.hearts i.full { background-image: var(--ic-heart-full); } .hearts i.half { background-image: var(--ic-heart-half); } .hearts i.empty { background-image: var(--ic-heart-empty); }
+.hunger i.full { background-image: var(--ic-food-full); } .hunger i.half { background-image: var(--ic-food-half); } .hunger i.empty { background-image: var(--ic-food-empty); }
+.air i.full { background-image: var(--ic-bubble); } .air i.empty { background-image: none; }
+.hearts i.blink { animation: blink .5s steps(1) infinite alternate; }
+@keyframes blink { from { transform: translateY(0); } to { transform: translateY(-2px); } }
+.xp-row { position: relative; height: 10px; margin: 2px 0 2px; }
+.xp-bar { height: 10px; border: 2px solid #000; background: #2a2a2a; box-shadow: inset 0 0 0 1px #555; }
+.xp-bar div { height: 100%; background: #7fe61c; }
+.xp-level { position: absolute; left: 50%; top: -16px; transform: translateX(-50%); color: #7fe61c; font-family: var(--font-pixel); font-size: 12px; text-shadow: 1px 1px 0 #000; }
+.hotbar { position: static; transform: none; pointer-events: auto; }
+.slot .dur { position: absolute; left: 5px; right: 5px; bottom: 5px; height: 3px; background: #222; }
+.slot .dur div { height: 100%; }
+.hud-hint { bottom: 128px; }
+.debug { position: absolute; top: 76px; left: 10px; font: 14px/1.3 monospace; color: #fff; text-shadow: 1px 1px 0 #000; background: rgba(0,0,0,.35); margin: 0; padding: 4px 6px; white-space: pre; }
+.debug:empty { display: none; }
+.adv-toast { position: absolute; top: 56px; right: 12px; display: flex; gap: 10px; align-items: center; background: var(--panel); color: #222; border: 3px solid #000; box-shadow: inset 2px 2px 0 #fff, inset -2px -2px 0 #555; padding: 8px 14px; transform: translateX(130%); transition: transform .4s; font-size: 18px; line-height: 1.2; }
+.adv-toast.show { transform: none; }
+.adv-toast b { color: #c9a100; font-family: var(--font-pixel); font-size: 9px; }
+.adv-toast canvas { width: 32px; height: 32px; image-rendering: pixelated; }
+.game-wrap.hurt::after { content: ''; position: absolute; inset: 0; background: rgba(255,0,0,.28); pointer-events: none; z-index: 4; }
+
+/* ===== Container GUI ===== */
+.gui { position: absolute; inset: 0; background: rgba(0,0,0,.5); display: flex; z-index: 7; overflow: auto; padding: 10px; }
+.gui-panel { margin: auto; position: relative; width: auto; max-width: 100%; padding: 14px 16px 16px; }
+.gui-title { font-family: var(--font-pixel); font-size: 11px; color: #3b3b3b; margin-bottom: 8px; }
+.gui-sub { font-size: 18px; color: #3b3b3b; margin: 8px 0 4px; }
+.gui-grid { display: grid; gap: 2px; }
+.gui-hotbar { margin-top: 6px; }
+.gslot { width: 52px; height: 52px; position: relative; background: #8b8b8b; border: 2px solid #373737; box-shadow: inset 2px 2px 0 #373737, inset -2px -2px 0 #fff; display: grid; place-items: center; cursor: pointer; user-select: none; }
+.gslot:hover { background: #a8a8a8; }
+.gslot.selected { outline: 3px solid #fff; outline-offset: -3px; }
+.gslot.result { width: 60px; height: 60px; }
+.gslot canvas { width: 36px; height: 36px; image-rendering: pixelated; pointer-events: none; }
+.gslot .count, .cursor-stack .count { position: absolute; right: 3px; bottom: 0; font-size: 20px; color: #fff; text-shadow: 1px 1px 0 #000; font-family: var(--font-body); pointer-events: none; }
+.gslot .dur { position: absolute; left: 5px; right: 5px; bottom: 5px; height: 3px; background: #222; }
+.gslot .dur div { height: 100%; }
+.craft-wrap { display: flex; align-items: center; gap: 14px; }
+.gui-arrow { font-family: var(--font-pixel); font-size: 18px; color: #3b3b3b; }
+.gui-hint { font-size: 16px; color: #555; margin-top: 8px; max-width: 480px; line-height: 1.2; }
+.gui-close { position: absolute; top: 10px; right: 10px; }
+.gui-tooltip { position: absolute; left: 50%; bottom: -34px; transform: translateX(-50%); background: rgba(16,0,16,.92); color: #fff; border: 2px solid #4a2a7a; padding: 4px 10px; font-size: 18px; white-space: nowrap; pointer-events: none; z-index: 2; }
+.cursor-stack { position: fixed; width: 52px; height: 52px; pointer-events: none; z-index: 100; transform: translate(-26px, -26px); display: grid; place-items: center; }
+.cursor-stack canvas { width: 36px; height: 36px; image-rendering: pixelated; }
+.creative-grid { grid-template-columns: repeat(9, 52px); max-height: 224px; overflow: auto; }
+.recipe-book { margin-top: 10px; }
+.recipe-list { display: flex; flex-wrap: wrap; gap: 3px; max-width: 480px; }
+.recipe-entry { width: 36px; height: 36px; display: grid; place-items: center; background: #8b8b8b; border: 2px solid #373737; cursor: pointer; }
+.recipe-entry canvas { width: 28px; height: 28px; image-rendering: pixelated; }
+.recipe-entry.disabled { opacity: .35; cursor: default; }
+.recipe-entry:hover { background: #a8a8a8; }
+.furnace-wrap { display: flex; align-items: center; gap: 14px; }
+.furnace-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.furnace-fire { width: 18px; height: 18px; background: #444; border: 2px solid #222; display: flex; align-items: flex-end; }
+.furnace-fire div { width: 100%; background: #f80; }
+.furnace-prog { width: 52px; height: 12px; background: #444; border: 2px solid #222; }
+.furnace-prog div { height: 100%; background: #fff; }
+
+/* ===== Quests / death ===== */
+.quest-list { display: grid; gap: 6px; max-height: 60vh; overflow: auto; }
+.quest { display: flex; align-items: center; gap: 12px; background: #8b8b8b; border: 2px solid #373737; padding: 6px 10px; font-size: 18px; line-height: 1.15; }
+.quest.done { background: #8fc86a; }
+.quest b { font-family: var(--font-pixel); font-size: 10px; }
+.quest span { color: #333; }
+.quest .mark { margin-left: auto; font-size: 24px; }
+.quest canvas { width: 32px; height: 32px; image-rendering: pixelated; flex: none; }
+.death { position: absolute; inset: 0; background: rgba(120,0,0,.6); display: grid; place-content: center; text-align: center; z-index: 8; }
+.death h3 { font-size: 28px; color: #fff; text-shadow: 3px 3px 0 #000; }
+.death p { font-size: 22px; color: #fff; text-shadow: 1px 1px 0 #000; }
+.touch-buttons { grid-template-columns: 1fr 1fr 1fr; }
+.touch-btn.on { background: rgba(255,255,255,.5); color: #000; }
+@media (max-width: 860px) {
+  .status-bars { width: 360px; }
+  .hearts i, .hunger i, .air i { width: 14px; height: 14px; }
+  .gslot { width: 40px; height: 40px; } .gslot canvas { width: 28px; height: 28px; }
+  .gui-grid { gap: 1px; }
+  .gui-panel .gui-grid[style] { grid-template-columns: repeat(9, 40px) !important; }
+  .creative-grid { grid-template-columns: repeat(9, 40px) !important; }
 }

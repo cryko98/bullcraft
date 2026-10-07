@@ -9,7 +9,7 @@ local save in the browser (localStorage).
 - `index.html` – landing page (hero, game, about, tokenomics, how to buy, roadmap, community)
 - `style.css` – Minecraft-style theme
 - `main.js` – page scripts (nav, copy CA, procedural CSS textures)
-- `game.js` – the voxel game (Three.js from CDN, no build step)
+- `game/` – the voxel game modules (Three.js from CDN via import map, no build step)
 - `bullcraft.png` – source logo; `favicon-*.png`, `apple-touch-icon.png`, `logo-*.png` are generated from it
 - `vercel.json` – static hosting config
 
@@ -25,10 +25,17 @@ npx --yes serve -l 5173 .
 
 Push to GitHub and import the repo in Vercel as a static site (no build command, output directory `.`).
 
-## Game controls
+## Game
 
-WASD move · Space jump · Shift sprint · Mouse look · Left click mine · Right click place · 1–9 / scroll hotbar ·
-E inventory & crafting · F fly · F5 first/third person · Esc pause. Touch controls appear on phones.
+Survival game in the browser: health, hunger, fall damage, drowning, lava, day/night cycle, zombies at night,
+cows and pigs, caves with coal / iron / gold / diamond ore, torches with real block lighting, tools with tiers and
+durability, 2x2 and 3x3 crafting, furnace smelting, chests, item drops, XP levels and 24 advancements.
+
+Controls: WASD move · Space jump (double-tap in Creative to fly) · Shift sneak · Ctrl or double-tap W sprint ·
+Left click mine / attack · Right click place / use / eat · 1-9 and scroll hotbar · E inventory and crafting ·
+Q drop (Ctrl+Q stack) · L advancements · F5 camera · F3 debug · Esc pause. Touch controls appear on phones.
+
+Code lives in the game/ folder (constants, noise, textures, world, mesher, physics, models, entities, inventory, ui, main).
 
 ## Before launch
 
