@@ -99,9 +99,11 @@ export class Game {
     this.canvas.addEventListener('click', () => { if (this.started && !this.isTouch && !this.locked && !this.gui.open && !this.questsOpen && !this.dead) this.lock(); });
     document.addEventListener('pointerlockchange', () => {
       this.locked = document.pointerLockElement === this.canvas;
-      if (this.locked) { this.running = true; this.ui.overlay.classList.add('hidden'); }
+      if (this.locked) { this.running = true; this.ui.overlay.classList.add('hidden'); this.lockScroll(true); }
       else if (!this.isTouch && !this.gui.open && !this.questsOpen && !this.dead) this.pause();
     });
+    document.addEventListener('wheel', e => { if (this.locked || this.gui.open || this.questsOpen) e.preventDefault(); }, { passive: false });
+    document.addEventListener('keydown', e => { if (this.started && (this.locked || this.gui.open || this.questsOpen || (this.isTouch && this.running)) && ['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', 'Home', 'End'].includes(e.code)) e.preventDefault(); }, { passive: false });
     document.addEventListener('pointerlockerror', () => this.hud.toast('Click the game again to capture the mouse'));
     document.addEventListener('mousemove', e => { if (this.locked) { this.mouse.dx += e.movementX; this.mouse.dy += e.movementY; } });
     this.canvas.addEventListener('mousedown', e => { if (!this.locked) return; if (e.button === 0) { this.mouse.left = true; this.attackClick(); } if (e.button === 2) { this.mouse.right = true; this.useT = 0; } if (e.button === 1) { e.preventDefault(); this.pickBlock(); } });
@@ -148,11 +150,13 @@ export class Game {
     hold('tSprint', () => { this.keys.ControlLeft = !this.keys.ControlLeft; document.getElementById('tSprint').classList.toggle('on', this.keys.ControlLeft); });
     document.getElementById('btnInventory').addEventListener('click', () => { if (this.gui.open) this.closeGui(); else this.openGui('inventory'); });
   }
-  lock() { try { const p = this.canvas.requestPointerLock(); if (p && p.catch) p.catch(() => { }); } catch (e) { } }
-  start() { Sound.init(); this.started = true; if (this.isTouch) { this.running = true; this.ui.overlay.classList.add('hidden'); } else this.lock(); }
-  resume() { if (this.isTouch) { this.running = true; this.ui.overlay.classList.add('hidden'); } else this.lock(); }
+  lock() { this.centerGame(); try { const p = this.canvas.requestPointerLock(); if (p && p.catch) p.catch(() => { }); } catch (e) { } }
+  centerGame() { const r = this.wrap.getBoundingClientRect(); const target = window.scrollY + r.top - Math.max(0, (window.innerHeight - r.height) / 2); if (Math.abs(target - window.scrollY) > 2 && !document.fullscreenElement) window.scrollTo({ top: target, behavior: 'instant' }); }
+  lockScroll(on) { document.body.classList.toggle('playing', !!on); }
+  start() { Sound.init(); this.started = true; if (this.isTouch) { this.running = true; this.ui.overlay.classList.add('hidden'); this.centerGame(); this.lockScroll(true); } else this.lock(); }
+  resume() { if (this.isTouch) { this.running = true; this.ui.overlay.classList.add('hidden'); this.centerGame(); this.lockScroll(true); } else this.lock(); }
   pause() {
-    this.running = false; this.keys = {}; this.mouse.left = this.mouse.right = false; this.breaking = null; if (!this.started) return;
+    this.running = false; this.keys = {}; this.mouse.left = this.mouse.right = false; this.breaking = null; this.lockScroll(false); if (!this.started) return;
     this.ui.overlayTitle.textContent = 'Game Paused'; this.ui.overlayText.textContent = 'Your world is saved in this browser.';
     this.ui.btnPlay.textContent = this.isTouch ? 'Tap to Resume' : 'Back to Game'; this.ui.overlay.classList.remove('hidden'); this.save();
   }
@@ -183,8 +187,8 @@ export class Game {
     this.ui.btnMode.textContent = 'Mode: ' + (this.mode === 'survival' ? 'Survival' : 'Creative'); this.ui.btnPlay.disabled = true;
   }
   spawn() {
-    for (let r = 0; r < 80; r += 4) for (let a = 0; a < 8; a++) { const x = Math.round(Math.cos(a) * r), z = Math.round(Math.sin(a) * r); const h = this.world.height(x, z); if (h > WATER_LEVEL + 1 && h < 46 && this.world.getBlock(x, h + 1, z) === B.AIR && this.world.getBlock(x, h + 2, z) === B.AIR && this.world.getBlock(x, h, z) === B.GRASS) { this.player.pos.set(x + 0.5, h + 1.5, z + 0.5); return; } }
-    this.player.pos.set(0.5, 45, 0.5);
+    const s = this.world.spawn; const h = this.world.height(s.x, s.z);
+    this.player.pos.set(s.x + 0.5, h + 1.2, s.z + 0.5); this.player.vel.set(0, 0, 0);
   }
   save() {
     if (!this.world) return;
@@ -265,16 +269,22 @@ export class Game {
     if (this.eatT > 0 || (this.useT > 0 && this.breaking)) speed *= 0.8;
     const sin = Math.sin(this.yaw), cos = Math.cos(this.yaw);
     const mx = (-sin * fw + cos * st) * speed, mz = (-cos * fw - sin * st) * speed;
-    const acc = this.flying ? 8 : P.onGround ? 14 : inWater ? 6 : 2.5;
+    const acc = this.flying ? 8 : P.onGround ? 22 : inWater ? 6 : 3;
     P.vel.x += (mx - P.vel.x) * Math.min(1, acc * dt); P.vel.z += (mz - P.vel.z) * Math.min(1, acc * dt);
     if (this.flying) { let vy = 0; if (keys.Space) vy += speed; if (keys.ShiftLeft || keys.ShiftRight) vy -= speed; P.vel.y += (vy - P.vel.y) * Math.min(1, 10 * dt); }
     else if (inWater || inLava) { P.vel.y -= GRAVITY * 0.12 * dt; P.vel.y *= Math.pow(0.3, dt); if (keys.Space) P.vel.y = Math.min(P.vel.y + 30 * dt, 3.5); if (this.fallStart !== null) this.fallStart = null; }
-    else { P.vel.y -= GRAVITY * dt; if (P.vel.y < -78) P.vel.y = -78; if (keys.Space && P.onGround) { P.vel.y = JUMP_VEL; P.onGround = false; if (this.sprinting) { P.vel.x += -sin * 2; P.vel.z += -cos * 2; } this.addExhaustion(this.sprinting ? 0.2 : 0.05); } }
+    else {
+      P.vel.y -= GRAVITY * dt; if (P.vel.y < -78) P.vel.y = -78;
+      if (keys.Space) this.jumpBuffer = 0.12; else this.jumpBuffer = Math.max(0, (this.jumpBuffer || 0) - dt);
+      if ((keys.Space || this.jumpBuffer > 0 || this.autoJumpNow) && P.onGround) { P.vel.y = JUMP_VEL; P.onGround = false; this.jumpBuffer = 0; if (this.sprinting) { P.vel.x += -sin * 2; P.vel.z += -cos * 2; } this.addExhaustion(this.sprinting ? 0.2 : 0.05); }
+      this.autoJumpNow = false;
+    }
     const wasOnGround = P.onGround; const vyBefore = P.vel.y;
     if (!wasOnGround && this.fallStart === null && !this.flying) this.fallStart = P.pos.y;
     if (this.fallStart !== null && P.pos.y > this.fallStart) this.fallStart = P.pos.y;
-    const res = moveBody(this.world, P, dt, { autoStep: this.autoJump && !this.sneaking });
-    if ((res.hitX || res.hitZ) && this.sprinting) { this.sprinting = false; this.wantSprint = false; }
+    const res = moveBody(this.world, P, dt, { autoStep: this.autoJump && !this.sneaking && (fw !== 0 || st !== 0) });
+    if (res.autoJump) this.autoJumpNow = true;
+    if ((res.hitX || res.hitZ) && this.sprinting && !res.autoJump) { this.sprinting = false; this.wantSprint = false; }
     if (P.onGround && !wasOnGround) {
       if (this.fallStart !== null && this.mode === 'survival' && !inWater) { const dist = this.fallStart - P.pos.y; if (dist > 3) { this.damage(Math.floor(dist - 3), 'fall'); } }
       this.fallStart = null; Sound.play('step');
@@ -504,8 +514,9 @@ export class Game {
     if (this.firstPerson) { this.camera.position.copy(eye); this.camera.lookAt(eye.clone().add(dir)); g.visible = false; }
     else {
       g.visible = !this.dead; let dist = 4.5;
-      for (let d = 0.3; d <= 4.5; d += 0.2) { const p = eye.clone().addScaledVector(dir, -d); if (isSolid(this.world.getBlock(Math.floor(p.x), Math.floor(p.y), Math.floor(p.z)))) { dist = Math.max(0.3, d - 0.35); break; } }
-      this.camera.position.copy(eye).addScaledVector(dir, -dist); this.camera.lookAt(eye.clone().add(dir.clone().multiplyScalar(2)));
+      for (let d = 0.3; d <= 4.5; d += 0.1) { const p = eye.clone().addScaledVector(dir, -d); if (isSolid(this.world.getBlock(Math.floor(p.x), Math.floor(p.y), Math.floor(p.z)))) { dist = Math.max(0.3, d - 0.3); break; } }
+      if (this.camDist === undefined) this.camDist = dist; this.camDist += (dist - this.camDist) * (dist < this.camDist ? 1 : 0.15);
+      this.camera.position.copy(eye).addScaledVector(dir, -this.camDist); this.camera.lookAt(eye.clone().add(dir.clone().multiplyScalar(2)));
     }
     let targetYaw = this.moving ? Math.atan2(-this.player.vel.x, -this.player.vel.z) : this.yaw;
     if (this.keys.KeyS && !this.keys.KeyW) targetYaw = this.yaw;

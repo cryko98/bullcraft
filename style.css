@@ -385,3 +385,7 @@ body.touch .hud-top-left { top: 52px; }
   .gui-panel .gui-grid[style] { grid-template-columns: repeat(9, 40px) !important; }
   .creative-grid { grid-template-columns: repeat(9, 40px) !important; }
 }
+
+/* lock page scrolling while playing */
+body.playing { overflow: hidden; overscroll-behavior: none; }
+body.playing .nav { pointer-events: none; opacity: .35; }

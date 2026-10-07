@@ -32,16 +32,17 @@ export function moveBody(world, body, dt, opts = {}) {
   if (sneakOK('x', dx)) res.hitX = move('x', dx); else { body.vel.x = 0; }
   if (sneakOK('z', dz)) res.hitZ = move('z', dz); else { body.vel.z = 0; }
   if ((res.hitX || res.hitZ) && opts.autoStep && body.onGround) {
-    const p = body.pos;
-    if (!collides(world, p.x, p.y + 1.0, p.z, body.w, body.h)) {
-      const tx = p.x + (res.hitX ? dx : 0), tz = p.z + (res.hitZ ? dz : 0);
-      if (!collides(world, tx, p.y + 1.0, tz, body.w, body.h)) { p.x = tx; p.z = tz; p.y += 1.0; res.hitX = res.hitZ = false; }
-    }
+    // Minecraft-style auto-jump: if the obstacle is exactly one block high and there is headroom, jump over it
+    const p = body.pos; const ahead = 0.3;
+    const tx = p.x + (res.hitX ? Math.sign(dx) * ahead : 0), tz = p.z + (res.hitZ ? Math.sign(dz) * ahead : 0);
+    if (!collides(world, tx, p.y + 1.0, tz, body.w, body.h) && !collides(world, p.x, p.y + 1.0, p.z, body.w, body.h)) { res.autoJump = true; }
   }
-  if (res.hitX) body.vel.x = 0; if (res.hitZ) body.vel.z = 0;
+  if (res.hitX && !res.autoJump) body.vel.x = 0; if (res.hitZ && !res.autoJump) body.vel.z = 0;
   body.onGround = false;
   res.hitY = move('y', dy);
   if (res.hitY) { if (dy < 0) body.onGround = true; body.vel.y = 0; }
+  // unstuck: if we somehow ended up inside a solid block, nudge upwards
+  if (collides(world, body.pos.x, body.pos.y, body.pos.z, body.w, body.h)) { body.pos.y += Math.min(0.2, 4 * dt); body.vel.y = Math.max(body.vel.y, 0); }
   return res;
 }
 export function inLiquid(world, body, id = B.WATER) {

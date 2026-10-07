@@ -1,6 +1,6 @@
 /* BullCraft — block/item registry, recipes, smelting, advancements */
 export const CHUNK = 16, HEIGHT = 64, WATER_LEVEL = 24;
-export const SAVE_KEY = 'bullcraft_save_v2';
+export const SAVE_KEY = 'bullcraft_save_v3';
 export const DAY_LENGTH = 1200; // seconds per full day (Minecraft: 20 min)
 
 // ---- Block ids (< 100) ----

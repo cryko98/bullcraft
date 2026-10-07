@@ -13,22 +13,48 @@ export class World {
     this.chunks = new Map(); this.mods = new Map(); this.light = new Map(); this.heightCache = new Map();
     this.tiles = new Map();        // "x,y,z" -> block entity data (chest/furnace)
     this.spawnedChunks = new Set();
+    this.spawn = this.findSpawn();
+  }
+  rawHeight(x, z) {
+    const n = this.n, n2 = this.n2;
+    let v = 23 + n(x / 90, z / 90) * 12 + n2(x / 28, z / 28) * 5 + n(x / 9 + 50, z / 9) * 0.8;
+    const hills = n2(x / 170 + 100, z / 170);
+    if (hills > 0.15) v += (hills - 0.15) * (hills - 0.15) * 90;
+    return Math.max(4, Math.min(HEIGHT - 5, Math.floor(v)));
+  }
+  findSpawn() {
+    let best = null, bestScore = 1e9;
+    for (let r = 0; r <= 200; r += 6) {
+      const steps = r === 0 ? 1 : Math.max(8, Math.floor(r / 3));
+      for (let i = 0; i < steps; i++) {
+        const a = i / steps * Math.PI * 2; const x = Math.round(Math.cos(a) * r), z = Math.round(Math.sin(a) * r);
+        const h = this.rawHeight(x, z); if (h <= WATER_LEVEL + 2 || h >= 42) continue;
+        let min = h, max = h;
+        for (let dx = -6; dx <= 6; dx += 2) for (let dz = -6; dz <= 6; dz += 2) { const v = this.rawHeight(x + dx, z + dz); if (v < min) min = v; if (v > max) max = v; }
+        if (min <= WATER_LEVEL + 1) continue;
+        const score = (max - min) * 10 + r * 0.05;
+        if (score < bestScore) { bestScore = score; best = { x, z, h }; if (max - min <= 1) return best; }
+      }
+      if (best && bestScore < 25) return best;
+    }
+    return best || { x: 0, z: 0, h: this.rawHeight(0, 0) };
   }
   static key(cx, cz) { return cx + ',' + cz; }
   static idx(x, y, z) { return y + HEIGHT * (z + CHUNK * x); }
 
   height(x, z) {
     const k = x + ',' + z; let h = this.heightCache.get(k); if (h !== undefined) return h;
-    const n = this.n, n2 = this.n2;
-    let v = 23 + n(x / 90, z / 90) * 12 + n2(x / 28, z / 28) * 5 + n(x / 9 + 50, z / 9) * 1.5;
-    const hills = n2(x / 170 + 100, z / 170);
-    if (hills > 0.15) v += (hills - 0.15) * (hills - 0.15) * 90;
-    h = Math.max(4, Math.min(HEIGHT - 5, Math.floor(v)));
+    h = this.rawHeight(x, z);
+    if (this.spawn) { // flatten a plateau around the spawn point
+      const d = Math.hypot(x - this.spawn.x, z - this.spawn.z);
+      if (d < 16) { const t = d < 8 ? 1 : 1 - (d - 8) / 8; h = Math.round(h + (this.spawn.h - h) * t); }
+    }
     if (this.heightCache.size > 80000) this.heightCache.clear();
     this.heightCache.set(k, h); return h;
   }
   treeAt(x, z) {
     const h = this.height(x, z); if (h <= WATER_LEVEL + 1 || h >= 50) return 0;
+    if (this.spawn && Math.hypot(x - this.spawn.x, z - this.spawn.z) < 9) return 0;
     const forest = this.n2(x / 60 + 300, z / 60 + 300);
     const chance = forest > 0.1 ? 0.03 : 0.006;
     if (hash2(x, z, this.seed) > chance) return 0;
